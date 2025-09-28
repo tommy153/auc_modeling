@@ -17,7 +17,6 @@ venv.bak/
 *.csv
 *.xlsx
 *.json
-data/
 datasets/
 
 # IDE
