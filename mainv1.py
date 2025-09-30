@@ -17,9 +17,11 @@ from utils.modeling import (
     create_auc_analysis_table
 )
 
-
-# Header
-st.title("📊 수업 잔존기간 통합 분석 도구")
+st.set_page_config(
+    page_title="📊 수업 잔존기간 통합 분석 도구",
+    page_icon="🏠",
+    layout="wide"
+)
 
 st.subheader("1️⃣ 데이터 업로드 및 현재 생존분석")
 
