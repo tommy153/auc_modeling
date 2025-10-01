@@ -3,7 +3,7 @@ import plotly.express as px
 import pandas as pd
 import numpy as np
 from lifelines import KaplanMeierFitter
-
+from scipy.integrate import simpson
 
 def create_monthly_bar_chart(df_processed):
     """월별 신규 수업 시작 수 차트 생성"""
@@ -122,7 +122,7 @@ def create_survival_curve(df_processed, unit="주"):
     return fig
 
 
-def create_grouped_survival_curves(df_processed):
+def create_grouped_survival_curves(df_processed, unit="개월"):
     """결제개월수별 Kaplan-Meier 생존 곡선 생성"""
     groups = [
         ("전체", None),
@@ -142,7 +142,12 @@ def create_grouped_survival_curves(df_processed):
             data = df_processed[df_processed['결제개월수'] == pay_month]
 
         if len(data) > 0:
-            durations = data["donemonth"]
+            # 단위에 따른 duration 계산
+            if unit == "주":
+                durations = data['duration_days'] / 7
+            else:  # 개월
+                durations = data['duration_days'] / 30.44
+
             events = data["이탈여부"].astype(int)
 
             kmf.fit(durations, event_observed=events, label=group_name)
@@ -160,7 +165,7 @@ def create_grouped_survival_curves(df_processed):
 
     fig.update_layout(
         title="Kaplan–Meier 생존 곡선 (결제개월수별)",
-        xaxis_title="개월",
+        xaxis_title=unit,
         yaxis_title="생존 확률",
         template="plotly_white",
         hovermode="x unified",
@@ -172,6 +177,54 @@ def create_grouped_survival_curves(df_processed):
         )
     )
     fig.update_yaxes(tick0=0.0, dtick=0.1, range=[0,1], showgrid=False)
+    fig.update_xaxes(showgrid=False)
+
+    return fig
+
+
+def create_survival_duration_boxplot(df_processed, unit="개월"):
+    """결제개월수별 생존 기간 박스 플롯 생성"""
+    groups = [
+        ("1개월 구매", "1"),
+        ("3개월 구매", "3"),
+        ("6개월 구매", "6"),
+        ("12개월 구매", "12")
+    ]
+
+    fig = go.Figure()
+
+    for group_name, pay_month in groups:
+        data = df_processed[df_processed['결제개월수'] == pay_month]
+
+        if len(data) > 0:
+            # 단위에 따른 duration 계산
+            if unit == "주":
+                durations = data['duration_days'] / 7
+            else:  # 개월
+                durations = data['duration_days'] / 30.44
+
+            fig.add_trace(go.Box(
+                y=durations,
+                name=group_name,
+                boxmean=True,  # 평균만 표시 (X 표시만, 표준편차 마름모 제거)
+                boxpoints='outliers',  # 이상치만 표시
+                marker_color=px.colors.qualitative.Set1[groups.index((group_name, pay_month))],
+                notched=False,  # 신뢰구간 표시 제거
+                hovertemplate=f'<b>{group_name}</b><br>' +
+                             f'생존기간: %{{y:.1f}}{unit}<br>' +
+                             '<extra></extra>'
+            ))
+
+    fig.update_layout(
+        title=f"결제개월수별 생존 기간 분포 ({unit})",
+        xaxis_title="결제 개월수",
+        yaxis_title=f"생존 기간 ({unit})",
+        template="plotly_white",
+        showlegend=False,
+        height=500
+    )
+
+    fig.update_yaxes(showgrid=True, gridcolor='lightgray', gridwidth=0.5)
     fig.update_xaxes(showgrid=False)
 
     return fig
@@ -241,18 +294,20 @@ def create_survival_comparison_chart(kmf_current, kmf_improved):
     return fig_comparison
 
 
-def calculate_auc(kmf, max_months=36):
-    """AUC 계산 (36개월 기준)"""
+def calculate_auc(kmf, max_time=36, unit="개월"):
+    """AUC 계산"""
     survival_df = kmf.survival_function_.reset_index()
-    survival_df.columns = ["개월", "생존확률"]
-    survival_df = survival_df[(survival_df["개월"] <= max_months) & (survival_df["개월"] >= 0)]
-    auc_value = np.trapz(survival_df["생존확률"], survival_df["개월"])
+    survival_df.columns = ["시간", "생존확률"]
+    survival_df = survival_df[(survival_df["시간"] <= max_time) & (survival_df["시간"] >= 0)]
+    auc_value = simpson(survival_df["생존확률"], x=survival_df["시간"])
     return auc_value
 
 
-def calculate_survival_rate_at_time(kmf, months):
+def calculate_survival_rate_at_time(kmf, time_value, unit="개월"):
     """특정 시점의 생존율 계산"""
-    return kmf.predict(months * 30)  # 개월을 일로 변환
+    # unit에 따른 변환 없이 time_value를 그대로 사용
+    # kmf 객체는 이미 적절한 단위로 fitting되어 있음
+    return kmf.predict(time_value)
 
 
 def display_auc_improvement_results(auc_current, auc_improved):
