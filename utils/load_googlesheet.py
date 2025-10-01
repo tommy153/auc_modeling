@@ -4,13 +4,9 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime, timedelta
 import json
-<<<<<<< HEAD
 import streamlit as st
 
 @st.cache_data
-=======
-
->>>>>>> origin/main
 def load_google_sheets_data(worksheet_name: str):
     print(f"[{datetime.now()}] Google Sheet 데이터 로드")
     """Google Sheets에서 데이터 로드 - 중복 헤더 오류 해결"""
@@ -109,7 +105,6 @@ def processing_google_sheet(df: pd.DataFrame) -> pd.DataFrame:
 
         # 최종적으로 pandas Series로 리턴할 때만 Int64 변환
         return pd.Series(int_part * 28 + add_days, index=series.index).astype("Int64")
-<<<<<<< HEAD
     
     weight_map = {'W1': 0.25, 'W2': 0.125, 'W3': 0.0833}
 
@@ -121,8 +116,6 @@ def processing_google_sheet(df: pd.DataFrame) -> pd.DataFrame:
         df.loc[cond, 'donemonth'] = df.loc[cond, 'cycle_count'] * df.loc[cond, 'opt_weight']
 
         return df
-=======
->>>>>>> origin/main
 
     print(f"[{datetime.now()}] 전처리 시작")
 
@@ -156,22 +149,14 @@ def processing_google_sheet(df: pd.DataFrame) -> pd.DataFrame:
 
     # 카테고리형 (이탈여부: A=0, P=1)
     df['이탈여부'] = df['이탈여부'].map({"A": 0, "P": 1})
-<<<<<<< HEAD
     df = correct_done_month(df)
     df['duration_days'] = donemonth_to_days_bucketed(df['donemonth'])
     df['결제개월수'] = df['최초 개월 수']
-=======
-    df['duration_days'] = donemonth_to_days_bucketed(df['donemonth'])
->>>>>>> origin/main
 
     # 6. 최종 사용할 컬럼만 선택 (존재하는 것만 유지)
     keep_cols = [
         '결제등록일', 'lvt', 'user_No', 'option', '단계', '이탈여부', 'donemonth', 'duration_days',
-<<<<<<< HEAD
         '학년', '교과/탐구', '결제개월수', 'stage_count', 'cycle_count',
-=======
-        '학년', '교과/탐구', '최초 개월 수', 'stage_count', 'cycle_count',
->>>>>>> origin/main
         '과외상태', '수업상태', '중단예정일', '중단 예정 DONEMONTH'
     ]
     df = df[keep_cols]
