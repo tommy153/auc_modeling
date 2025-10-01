@@ -141,7 +141,9 @@ def processing_google_sheet(df: pd.DataFrame) -> pd.DataFrame:
     df['lvt'] = pd.to_numeric(df['lvt'], errors='coerce').astype('Int64')
     df['user_No'] = pd.to_numeric(df['user_No'], errors='coerce').astype('Int64')
     df['단계'] = pd.to_numeric(df['단계'], errors='coerce').fillna(0).astype(int)
+    # 1. 원본 donemonth 보존
     df['donemonth'] = pd.to_numeric(df['done_month'], errors='coerce')
+    df['donemonth_raw'] = pd.to_numeric(df['done_month'], errors='coerce')
     df['stage_count'] = pd.to_numeric(df['stage_count'], errors='coerce').fillna(0).astype(int)
     df['cycle_count'] = pd.to_numeric(df['cycle_count'], errors='coerce').fillna(0).astype(int)
     if '중단 예정 DONEMONTH' in df.columns:
@@ -155,7 +157,7 @@ def processing_google_sheet(df: pd.DataFrame) -> pd.DataFrame:
 
     # 6. 최종 사용할 컬럼만 선택 (존재하는 것만 유지)
     keep_cols = [
-        '결제등록일', 'lvt', 'user_No', 'option', '단계', '이탈여부', 'donemonth', 'duration_days',
+        '결제등록일', 'lvt', 'user_No', 'option', '단계', '이탈여부', 'donemonth_raw','donemonth', 'duration_days',
         '학년', '교과/탐구', '결제개월수', 'stage_count', 'cycle_count',
         '과외상태', '수업상태', '중단예정일', '중단 예정 DONEMONTH'
     ]
